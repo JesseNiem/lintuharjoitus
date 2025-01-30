@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <title>LAAT25 Vesilinnut v0.1</title>
+    <style>
+        button {
+            font-size: 3em; /* Triple the font size */
+            padding: 20px; /* Increase padding to make buttons larger */
+        }
+        #result {
+            font-size: 5em; /* Five times larger font for Oikein/Väärin */
+        }
+        #bird-image {
+            max-width: 800px; /* Set the maximum width for images */
+            width: 100%; /* Ensure the image scales properly */
+            height: auto; /* Maintain aspect ratio */
+        }
+    </style>
+</head>
+<body>
+    <h1>LAAT25 Vesilinnut v0.1</h1>
+    <img id="bird-image" src="" alt="Lintu">
+    <div id="options">
+        <button onclick="checkAnswer(0)">Vaihtoehto 1</button>
+        <button onclick="checkAnswer(1)">Vaihtoehto 2</button>
+        <button onclick="checkAnswer(2)">Vaihtoehto 3</button>
+    </div>
+    <p id="result"></p>
+
+    <script>
+        const birds = [
+            {name: "Haapana", src: "100-haapana-petri-vainio-pekka-komi-pk-800x484.jpg"},
+            {name: "Isokoskelo", src: "100-isokoskelo-micha-fager-800x345.jpg"},
+            {name: "Laulujoutsen", src: "100-laulujoutsen-pertti-rasp-1-800x310.jpg"},
+            {name: "Merihanhi", src: "100-merihanhi-pertti-rasp-800x406.jpg"},
+            {name: "Metsähanhi", src: "100-metsahanhi-petri-vainio-2-800x397.jpg"},
+            {name: "Sinisorsa", src: "100-sinisorsa-pertti-rasp-1-800x335.jpg"},
+            {name: "Tavi", src: "100-tavi-hannu-eskonen-pekka-komi-k-800x364.jpg"},
+            {name: "Telkkä", src: "100-telkka_hannu-eskonen.jpg"},
+            {name: "Tukkasotka", src: "100-tukkasotka-micha-fager-800x382.jpg"},
+            {name: "Härkälintu", src: "härkälintu.jpg"},
+            {name: "Jouhisorsa", src: "jouhisorsa.jpg"},
+            {name: "Kaakkuri", src: "kaakkuri.jpg"},
+            {name: "Kuikka", src: "kuikka-vainio-petri-800x588.jpg"},
+            {name: "Pilkkasiipi", src: "pilkkasiipi_anne_keskiviikka-1600x991.jpg"},
+            {name: "Tukkakoskelo", src: "tukkakoskelo.jpg"},
+            {name: "Uivelo", src: "uivelo.jpg"},
+        ];
+
+        let currentBirdIndex = 0;
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function showNextBird() {
+            const bird = birds[currentBirdIndex];
+            document.getElementById('bird-image').src = bird.src;
+
+            const options = generateOptions(bird.name);
+            for (let i = 0; i < 3; i++) {
+                document.querySelectorAll('#options button')[i].textContent = options[i];
+                document.querySelectorAll('#options button')[i].setAttribute('data-answer', options[i]);
+            }
+
+            currentBirdIndex = (currentBirdIndex + 1) % birds.length;
+        }
+
+        function generateOptions(correctAnswer) {
+            const options = [correctAnswer];
+            while (options.length < 3) {
+                const randomBird = birds[Math.floor(Math.random() * birds.length)].name;
+                if (!options.includes(randomBird)) {
+                    options.push(randomBird);
+                }
+            }
+            return options.sort(() => Math.random() - 0.5); // Shuffle options
+        }
+
+        function checkAnswer(selectedIndex) {
+            const selectedAnswer = document.querySelectorAll('#options button')[selectedIndex].getAttribute('data-answer');
+            const result = document.getElementById('result');
+            if (selectedAnswer === birds[currentBirdIndex-1].name) {
+                result.textContent = 'Oikein!';
+                setTimeout(() => {
+                    result.textContent = '';
+                }, 1000); // Clear the result after 1 second
+                setTimeout(showNextBird, 1000); // Show next bird after 1 second
+            } else {
+                result.textContent = 'Väärin!';
+            }
+        }
+
+        shuffleArray(birds); // Shuffle birds array when the page loads
+        showNextBird(); // Start the quiz
+    </script>
+</body>
+</html>
