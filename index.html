@@ -44,6 +44,13 @@
             "Pöllöt": ["helmipöllö", "lapinpöllö", "suopöllö", "hiiripöllö", "varpuspöllö", "huuhkaja"]
         };
 
+        // Scientific names or alternative names for problematic birds
+        const birdNameMappings = {
+            "pilkkasiipi": "Mergus serrator", // Red-breasted Merganser
+            "metso": "Tetrao urogallus",     // Western Capercaillie
+            "isokuovi": "Numenius arquata"    // Eurasian Curlew
+        };
+
         let currentBird;
         let correctAnswerIndex;
 
@@ -77,17 +84,18 @@
         }
 
         async function fetchWikimediaImage(birdName) {
-            const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&pithumbsize=400&titles=${encodeURIComponent(birdName)}`;
+            const searchTerm = birdNameMappings[birdName] || birdName;
+            const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&pithumbsize=500&titles=${encodeURIComponent(searchTerm)}`;
             const response = await fetch(url);
             const data = await response.json();
             const pages = data.query.pages;
             const firstPage = Object.values(pages)[0];
-
             return firstPage?.thumbnail?.source || null;
         }
 
         async function fetchiNaturalistImage(birdName) {
-            const url = `https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(birdName)}&rank=species`;
+            const searchTerm = birdNameMappings[birdName] || birdName;
+            const url = `https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(searchTerm)}&rank=species`;
             const response = await fetch(url);
             const data = await response.json();
             if (data.results.length > 0) {
@@ -97,11 +105,17 @@
         }
 
         async function fetchGBIFImage(birdName) {
-            const url = `https://api.gbif.org/v1/species/match?name=${encodeURIComponent(birdName)}`;
+            const searchTerm = birdNameMappings[birdName] || birdName;
+            const url = `https://api.gbif.org/v1/species/match?name=${encodeURIComponent(searchTerm)}`;
             const response = await fetch(url);
             const data = await response.json();
             if (data.usageKey) {
-                return `https://api.gbif.org/v1/species/${data.usageKey}/media`;
+                const mediaUrl = `https://api.gbif.org/v1/species/${data.usageKey}/media`;
+                const mediaResponse = await fetch(mediaUrl);
+                const mediaData = await mediaResponse.json();
+                if (mediaData.results.length > 0) {
+                    return mediaData.results[0].identifier || null;
+                }
             }
             return null;
         }
