@@ -26,7 +26,9 @@
 <body>
     <h1>Lintutesti</h1>
     <div id="quiz">
-        <img id="birdImage" src="" alt="Linnun kuva">
+        <a id="imageLink" target="_blank">
+            <img id="birdImage" src="" alt="Linnun kuva">
+        </a>
         <div id="options">
             <button onclick="checkAnswer(0)"></button>
             <button onclick="checkAnswer(1)"></button>
@@ -67,7 +69,7 @@
         }
 
         function getImageUrl(birdName) {
-            return `https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/${birdName.replace(/ /g, "_")}.jpg/400px-${birdName.replace(/ /g, "_")}.jpg`;
+            return `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(birdName)}`;
         }
 
         function loadQuiz() {
@@ -76,10 +78,8 @@
             correctAnswerIndex = options.indexOf(currentBird);
 
             let imageUrl = getImageUrl(currentBird);
-            document.getElementById('birdImage').src = imageUrl;
-            document.getElementById('birdImage').onerror = function() {
-                this.src = "https://via.placeholder.com/300?text=Ei+kuvaa"; // Varmuuden vuoksi varakuva
-            };
+            document.getElementById('imageLink').href = imageUrl;
+            document.getElementById('birdImage').src = "https://via.placeholder.com/300?text=Näytä+lintukuva"; 
 
             document.getElementById('options').children[0].textContent = options[0];
             document.getElementById('options').children[1].textContent = options[1];
