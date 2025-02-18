@@ -41,15 +41,7 @@
             "Kahlaajat": ["isokuovi", "kapustarinta", "liro", "rantasipi", "suokukko", "valkoviklo", "taivaanvuohi", "töyhtöhyyppä", "kurki"],
             "Päivänpetolinnut": ["kalasääski", "kanahaukka", "maakotka", "merikotka", "muuttohaukka"],
             "Kanalinnut": ["pyy", "metso", "teeri", "riekko", "fasaani"],
-            "Pöllöt": ["helmipöllö", "lapinpöllö", "suopöllö", "hiiripöllö", "varpuspöllö", "huuhkaja"],
-            "Tikat/käki/sepelkyyhky": ["palokärki", "pohjantikka", "käpytikka", "käki", "sepelkyyhky"],
-            "Lokit/Tiirat": ["kalalokki", "harmaalokki", "naurulokki", "pikkulokki", "selkälokki", "kalatiira"],
-            "Varislinnut": ["varis", "korppi", "harakka", "närhi", "kuukkeli"],
-            "Rastaat": ["mustarastas", "räkättirastas", "laulurastas", "punakylkirastas"],
-            "Tiaiset": ["sinitiainen", "hömötiainen", "talitiainen", "töyhtötiainen"],
-            "Pääskyt/kirskulinnut": ["haarapääsky", "törmäpääsky", "räystäspääsky", "tervapääsky"],
-            "Muut pikkulinnut": ["järripeippo", "peippo", "viherpeippo", "keltasirkku", "kirjosieppo", "koskikara", "leppälintu", "pajulintu", "pulmunen", "punatulkku", "urpiainen", "tilhi", "varpunen", "västäräkki"],
-            "Käpylinnut": ["isokäpylintu"]
+            "Pöllöt": ["helmipöllö", "lapinpöllö", "suopöllö", "hiiripöllö", "varpuspöllö", "huuhkaja"]
         };
 
         let currentBird;
@@ -84,17 +76,25 @@
             return options.sort(() => Math.random() - 0.5);
         }
 
-        function getImageUrl(birdName) {
-            return `https://loremflickr.com/400/300/${encodeURIComponent(birdName)},bird`;
+        async function fetchBirdImage(birdName) {
+            const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&pithumbsize=400&titles=${encodeURIComponent(birdName)}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            const pages = data.query.pages;
+            const firstPage = Object.values(pages)[0];
+
+            return firstPage?.thumbnail?.source || "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"; // Fallback image
         }
 
-        function loadQuiz() {
+        async function loadQuiz() {
             const { category, bird } = getRandomBird();
             currentBird = bird;
             const options = getRandomOptions(currentBird, category);
             correctAnswerIndex = options.indexOf(currentBird);
 
-            document.getElementById('birdImage').src = getImageUrl(currentBird);
+            const imageUrl = await fetchBirdImage(currentBird);
+            document.getElementById('birdImage').src = imageUrl;
+
             document.getElementById('options').children[0].textContent = options[0];
             document.getElementById('options').children[1].textContent = options[1];
             document.getElementById('options').children[2].textContent = options[2];
@@ -104,7 +104,7 @@
         function checkAnswer(selectedIndex) {
             if (selectedIndex === correctAnswerIndex) {
                 document.getElementById('result').textContent = 'Oikein!';
-                setTimeout(loadQuiz, 1000);
+                setTimeout(loadQuiz, 1500);
             } else {
                 document.getElementById('result').textContent = 'Väärin!';
             }
