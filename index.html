@@ -104,13 +104,13 @@
             return options.sort(() => Math.random() - 0.5);
         }
 
-        // Function to fetch image URLs in sequence (for debugging)
+        // Fallback URL in case of failure
         async function fetchImage(birdName) {
-            console.log("Fetching image for: " + birdName);  // Debugging log
-            // Directly set the image for harakka (Eurasian Magpie)
+            // Fallback to hardcoded image for Harakka (Eurasian Magpie)
             if (birdName === "harakka") {
                 return "https://upload.wikimedia.org/wikipedia/commons/6/64/Pica_pica_-_Eurasian_Magpie.jpg"; // Correct image for harakka
             }
+
             const searchTerm = birdNameMappings[birdName] || birdName;
             const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&pithumbsize=500&titles=${encodeURIComponent(searchTerm)}`;
             try {
@@ -118,10 +118,10 @@
                 const data = await response.json();
                 const pages = data.query.pages;
                 const firstPage = Object.values(pages)[0];
-                return firstPage?.thumbnail?.source || null;
+                return firstPage?.thumbnail?.source || "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"; // Fallback image
             } catch (error) {
                 console.error('Error fetching image for ' + birdName + ':', error);
-                return null;
+                return "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"; // Fallback image if there's an error
             }
         }
 
@@ -131,9 +131,8 @@
             const options = getRandomOptions(currentBird, category);
             correctAnswerIndex = options.indexOf(currentBird);
 
-            // Fetch and display the bird image in sequence for debugging
+            // Fetch and display the bird image
             const imageUrl = await fetchImage(currentBird);
-            console.log("Image URL:", imageUrl);  // Debugging log to track the image URL
             document.getElementById('birdImage').src = imageUrl;
 
             document.getElementById('options').children[0].textContent = options[0];
