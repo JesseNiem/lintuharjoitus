@@ -26,9 +26,7 @@
 <body>
     <h1>Lintutesti</h1>
     <div id="quiz">
-        <a id="imageLink" target="_blank">
-            <img id="birdImage" src="" alt="Linnun kuva">
-        </a>
+        <img id="birdImage" src="" alt="Linnun kuva">
         <div id="options">
             <button onclick="checkAnswer(0)"></button>
             <button onclick="checkAnswer(1)"></button>
@@ -38,49 +36,65 @@
     </div>
 
     <script>
-        const birds = [
-            "haapana", "isokoskelo", "jouhisorsa", "kaakkuri", "kuikka",
-            "laulujoutsen", "merihanhi", "metsähanhi", "pilkkasiipi",
-            "härkälintu", "sinisorsa", "tavi", "telkkä", "tukkakoskelo",
-            "tukkasotka", "uivelo", "isokuovi", "kapustarinta", "liro",
-            "rantasipi", "suokukko", "valkoviklo", "taivaanvuohi", 
-            "töyhtöhyyppä", "kurki", "kalasääski", "kanahaukka",
-            "maakotka", "merikotka", "muuttohaukka", "pyy", "metso",
-            "teeri", "riekko", "fasaani", "helmipöllö", "lapinpöllö",
-            "suopöllö", "hiiripöllö", "varpuspöllö", "huuhkaja"
-        ];
+        const birdsByCategory = {
+            "Vesilinnut": ["haapana", "isokoskelo", "jouhisorsa", "kaakkuri", "kuikka", "laulujoutsen", "merihanhi", "metsähanhi", "pilkkasiipi", "härkälintu", "sinisorsa", "tavi", "telkkä", "tukkakoskelo", "tukkasotka", "uivelo"],
+            "Kahlaajat": ["isokuovi", "kapustarinta", "liro", "rantasipi", "suokukko", "valkoviklo", "taivaanvuohi", "töyhtöhyyppä", "kurki"],
+            "Päivänpetolinnut": ["kalasääski", "kanahaukka", "maakotka", "merikotka", "muuttohaukka"],
+            "Kanalinnut": ["pyy", "metso", "teeri", "riekko", "fasaani"],
+            "Pöllöt": ["helmipöllö", "lapinpöllö", "suopöllö", "hiiripöllö", "varpuspöllö", "huuhkaja"],
+            "Tikat/käki/sepelkyyhky": ["palokärki", "pohjantikka", "käpytikka", "käki", "sepelkyyhky"],
+            "Lokit/Tiirat": ["kalalokki", "harmaalokki", "naurulokki", "pikkulokki", "selkälokki", "kalatiira"],
+            "Varislinnut": ["varis", "korppi", "harakka", "närhi", "kuukkeli"],
+            "Rastaat": ["mustarastas", "räkättirastas", "laulurastas", "punakylkirastas"],
+            "Tiaiset": ["sinitiainen", "hömötiainen", "talitiainen", "töyhtötiainen"],
+            "Pääskyt/kirskulinnut": ["haarapääsky", "törmäpääsky", "räystäspääsky", "tervapääsky"],
+            "Muut pikkulinnut": ["järripeippo", "peippo", "viherpeippo", "keltasirkku", "kirjosieppo", "koskikara", "leppälintu", "pajulintu", "pulmunen", "punatulkku", "urpiainen", "tilhi", "varpunen", "västäräkki"],
+            "Käpylinnut": ["isokäpylintu"]
+        };
 
         let currentBird;
         let correctAnswerIndex;
 
-        function getRandomBird() {
+        function getRandomCategory() {
+            const categories = Object.keys(birdsByCategory);
+            return categories[Math.floor(Math.random() * categories.length)];
+        }
+
+        function getRandomBirdFromCategory(category) {
+            const birds = birdsByCategory[category];
             return birds[Math.floor(Math.random() * birds.length)];
         }
 
-        function getRandomOptions(correctBird) {
+        function getRandomBird() {
+            const category = getRandomCategory();
+            return { category, bird: getRandomBirdFromCategory(category) };
+        }
+
+        function getRandomOptions(correctBird, category) {
             const options = [correctBird];
+            const birdsInCategory = birdsByCategory[category];
+
             while (options.length < 3) {
-                const randomBird = getRandomBird();
+                const randomBird = birdsInCategory[Math.floor(Math.random() * birdsInCategory.length)];
                 if (!options.includes(randomBird)) {
                     options.push(randomBird);
                 }
             }
+
             return options.sort(() => Math.random() - 0.5);
         }
 
         function getImageUrl(birdName) {
-            return `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(birdName)}`;
+            return `https://loremflickr.com/400/300/${encodeURIComponent(birdName)},bird`;
         }
 
         function loadQuiz() {
-            currentBird = getRandomBird();
-            const options = getRandomOptions(currentBird);
+            const { category, bird } = getRandomBird();
+            currentBird = bird;
+            const options = getRandomOptions(currentBird, category);
             correctAnswerIndex = options.indexOf(currentBird);
 
-            let imageUrl = getImageUrl(currentBird);
-            document.getElementById('imageLink').href = imageUrl;
-            document.getElementById('birdImage').src = "https://via.placeholder.com/300?text=Näytä+lintukuva"; 
-
+            document.getElementById('birdImage').src = getImageUrl(currentBird);
             document.getElementById('options').children[0].textContent = options[0];
             document.getElementById('options').children[1].textContent = options[1];
             document.getElementById('options').children[2].textContent = options[2];
