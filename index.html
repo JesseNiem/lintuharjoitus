@@ -155,6 +155,11 @@
         }
 
         async function findBirdImage(birdName) {
+            if (birdName === "harakka") {
+                // Manually add correct image for "harakka" (Eurasian Magpie)
+                return "https://upload.wikimedia.org/wikipedia/commons/3/33/Pica_pica_-_Eurasian_Magpie.jpg"; // Correct image
+            }
+
             let imageUrl = await fetchWikimediaImage(birdName);
             if (imageUrl) return imageUrl;
 
