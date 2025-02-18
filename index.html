@@ -82,7 +82,6 @@
             const options = [correctBird];
             const birdsInCategory = birdsByCategory[category];
 
-            // If there is only one bird in the category (e.g., "isokäpylintu"), we need to add options from other categories
             while (options.length < 3) {
                 const randomBird = birdsInCategory[Math.floor(Math.random() * birdsInCategory.length)];
                 if (!options.includes(randomBird)) {
@@ -90,7 +89,6 @@
                 }
             }
 
-            // If still less than 3 options, pull random birds from other categories
             if (options.length < 3) {
                 const allBirds = Object.values(birdsByCategory).flat();
                 while (options.length < 3) {
@@ -104,13 +102,7 @@
             return options.sort(() => Math.random() - 0.5);
         }
 
-        // Fallback URL in case of failure
-        async function fetchImage(birdName) {
-            // Fallback to hardcoded image for Harakka (Eurasian Magpie)
-            if (birdName === "harakka") {
-                return "https://upload.wikimedia.org/wikipedia/commons/6/64/Pica_pica_-_Eurasian_Magpie.jpg"; // Correct image for harakka
-            }
-
+        async function fetchWikimediaImage(birdName) {
             const searchTerm = birdNameMappings[birdName] || birdName;
             const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&pithumbsize=500&titles=${encodeURIComponent(searchTerm)}`;
             try {
@@ -118,11 +110,65 @@
                 const data = await response.json();
                 const pages = data.query.pages;
                 const firstPage = Object.values(pages)[0];
-                return firstPage?.thumbnail?.source || "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"; // Fallback image
+                if (firstPage && firstPage.thumbnail) {
+                    return firstPage.thumbnail.source;
+                }
             } catch (error) {
-                console.error('Error fetching image for ' + birdName + ':', error);
-                return "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"; // Fallback image if there's an error
+                console.error('Error fetching Wikimedia image:', error);
             }
+            return null;
+        }
+
+        async function fetchiNaturalistImage(birdName) {
+            const searchTerm = birdNameMappings[birdName] || birdName;
+            const url = `https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(searchTerm)}&rank=species`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.results.length > 0 && data.results[0].default_photo) {
+                    return data.results[0].default_photo.medium_url;
+                }
+            } catch (error) {
+                console.error('Error fetching iNaturalist image:', error);
+            }
+            return null;
+        }
+
+        async function fetchGBIFImage(birdName) {
+            const searchTerm = birdNameMappings[birdName] || birdName;
+            const url = `https://api.gbif.org/v1/species/match?name=${encodeURIComponent(searchTerm)}`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.usageKey) {
+                    const mediaUrl = `https://api.gbif.org/v1/species/${data.usageKey}/media`;
+                    const mediaResponse = await fetch(mediaUrl);
+                    const mediaData = await mediaResponse.json();
+                    if (mediaData.results.length > 0) {
+                        return mediaData.results[0].identifier;
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching GBIF image:', error);
+            }
+            return null;
+        }
+
+        async function findBirdImage(birdName) {
+            if (birdName === "harakka") {
+                return "https://upload.wikimedia.org/wikipedia/commons/3/33/Pica_pica_-_Eurasian_Magpie.jpg"; // Correct image for harakka
+            }
+
+            let imageUrl = await fetchWikimediaImage(birdName);
+            if (imageUrl) return imageUrl;
+
+            imageUrl = await fetchiNaturalistImage(birdName);
+            if (imageUrl) return imageUrl;
+
+            imageUrl = await fetchGBIFImage(birdName);
+            if (imageUrl) return imageUrl;
+
+            return "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"; // Fallback image if all fail
         }
 
         async function loadQuiz() {
@@ -131,8 +177,7 @@
             const options = getRandomOptions(currentBird, category);
             correctAnswerIndex = options.indexOf(currentBird);
 
-            // Fetch and display the bird image
-            const imageUrl = await fetchImage(currentBird);
+            const imageUrl = await findBirdImage(currentBird);
             document.getElementById('birdImage').src = imageUrl;
 
             document.getElementById('options').children[0].textContent = options[0];
