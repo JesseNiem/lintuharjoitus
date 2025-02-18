@@ -81,10 +81,22 @@
             const options = [correctBird];
             const birdsInCategory = birdsByCategory[category];
 
+            // If there is only one bird in the category (e.g., "isokäpylintu"), we need to add options from other categories
             while (options.length < 3) {
                 const randomBird = birdsInCategory[Math.floor(Math.random() * birdsInCategory.length)];
                 if (!options.includes(randomBird)) {
                     options.push(randomBird);
+                }
+            }
+
+            // If still less than 3 options, pull random birds from other categories
+            if (options.length < 3) {
+                const allBirds = Object.values(birdsByCategory).flat();
+                while (options.length < 3) {
+                    const randomBird = allBirds[Math.floor(Math.random() * allBirds.length)];
+                    if (!options.includes(randomBird)) {
+                        options.push(randomBird);
+                    }
                 }
             }
 
