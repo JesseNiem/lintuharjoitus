@@ -82,13 +82,15 @@
             const options = [correctBird];
             const birdsInCategory = birdsByCategory[category];
 
-            while (options.length < 3) {
+            // Add birds from the same category
+            while (options.length < 3 && birdsInCategory.length > 1) {
                 const randomBird = birdsInCategory[Math.floor(Math.random() * birdsInCategory.length)];
                 if (!options.includes(randomBird)) {
                     options.push(randomBird);
                 }
             }
 
+            // If still not enough options, add birds from other categories
             if (options.length < 3) {
                 const allBirds = Object.values(birdsByCategory).flat();
                 while (options.length < 3) {
@@ -110,13 +112,11 @@
                 const data = await response.json();
                 const pages = data.query.pages;
                 const firstPage = Object.values(pages)[0];
-                if (firstPage && firstPage.thumbnail) {
-                    return firstPage.thumbnail.source;
-                }
+                return firstPage?.thumbnail?.source || null;
             } catch (error) {
                 console.error('Error fetching Wikimedia image:', error);
+                return null;
             }
-            return null;
         }
 
         async function fetchiNaturalistImage(birdName) {
@@ -125,13 +125,11 @@
             try {
                 const response = await fetch(url);
                 const data = await response.json();
-                if (data.results.length > 0 && data.results[0].default_photo) {
-                    return data.results[0].default_photo.medium_url;
-                }
+                return data.results[0]?.default_photo?.medium_url || null;
             } catch (error) {
                 console.error('Error fetching iNaturalist image:', error);
+                return null;
             }
-            return null;
         }
 
         async function fetchGBIFImage(birdName) {
@@ -144,9 +142,7 @@
                     const mediaUrl = `https://api.gbif.org/v1/species/${data.usageKey}/media`;
                     const mediaResponse = await fetch(mediaUrl);
                     const mediaData = await mediaResponse.json();
-                    if (mediaData.results.length > 0) {
-                        return mediaData.results[0].identifier;
-                    }
+                    return mediaData.results[0]?.identifier || null;
                 }
             } catch (error) {
                 console.error('Error fetching GBIF image:', error);
@@ -168,7 +164,7 @@
             imageUrl = await fetchGBIFImage(birdName);
             if (imageUrl) return imageUrl;
 
-            return "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"; // Fallback image if all fail
+            return "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"; // Fallback image
         }
 
         async function loadQuiz() {
