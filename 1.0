@@ -76,14 +76,47 @@
             return options.sort(() => Math.random() - 0.5);
         }
 
-        async function fetchBirdImage(birdName) {
+        async function fetchWikimediaImage(birdName) {
             const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&pithumbsize=400&titles=${encodeURIComponent(birdName)}`;
             const response = await fetch(url);
             const data = await response.json();
             const pages = data.query.pages;
             const firstPage = Object.values(pages)[0];
 
-            return firstPage?.thumbnail?.source || "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"; // Fallback image
+            return firstPage?.thumbnail?.source || null;
+        }
+
+        async function fetchiNaturalistImage(birdName) {
+            const url = `https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(birdName)}&rank=species`;
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.results.length > 0) {
+                return data.results[0].default_photo?.medium_url || null;
+            }
+            return null;
+        }
+
+        async function fetchGBIFImage(birdName) {
+            const url = `https://api.gbif.org/v1/species/match?name=${encodeURIComponent(birdName)}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.usageKey) {
+                return `https://api.gbif.org/v1/species/${data.usageKey}/media`;
+            }
+            return null;
+        }
+
+        async function findBirdImage(birdName) {
+            let imageUrl = await fetchWikimediaImage(birdName);
+            if (imageUrl) return imageUrl;
+
+            imageUrl = await fetchiNaturalistImage(birdName);
+            if (imageUrl) return imageUrl;
+
+            imageUrl = await fetchGBIFImage(birdName);
+            if (imageUrl) return imageUrl;
+
+            return "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"; // Fallback image
         }
 
         async function loadQuiz() {
@@ -92,7 +125,7 @@
             const options = getRandomOptions(currentBird, category);
             correctAnswerIndex = options.indexOf(currentBird);
 
-            const imageUrl = await fetchBirdImage(currentBird);
+            const imageUrl = await findBirdImage(currentBird);
             document.getElementById('birdImage').src = imageUrl;
 
             document.getElementById('options').children[0].textContent = options[0];
