@@ -154,6 +154,9 @@
             if (birdName === "harakka") {
                 return "https://upload.wikimedia.org/wikipedia/commons/4/42/Sroka_Pica_Pica_II.jpg"; // Correct image for harakka
             }
+            if (birdName === "pilkkasiipi") {
+                return "https://upload.wikimedia.org/wikipedia/commons/6/6d/Mergus_serrator_1.jpg"; // Correct image for pilkkasiipi
+            }
 
             let imageUrl = await fetchWikimediaImage(birdName);
             if (imageUrl) return imageUrl;
