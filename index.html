@@ -9,11 +9,13 @@
             font-family: Arial, sans-serif;
             text-align: center;
             margin-top: 50px;
+            background-color: #2c2c2c;
+            color: white;
         }
         img {
             width: 500px;
             height: auto;
-            border: 2px solid #000;
+            border: 2px solid #fff;
             margin-bottom: 20px;
             cursor: pointer;
         }
@@ -21,6 +23,13 @@
             margin: 10px;
             padding: 10px;
             font-size: 25px;
+            background-color: #444;
+            color: white;
+            border: 1px solid white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #555;
         }
         #score {
             font-size: 20px;
@@ -57,28 +66,9 @@
     </div>
 
     <script>
-        const birdsByCategory = {
-            "Vesilinnut": ["haapana", "isokoskelo", "jouhisorsa", "kaakkuri", "kuikka", "laulujoutsen", "merihanhi", "metsähanhi", "pilkkasiipi", "härkälintu", "sinisorsa", "tavi", "telkkä", "tukkakoskelo", "tukkasotka", "uivelo"],
-            "Kahlaajat": ["isokuovi", "kapustarinta", "liro", "rantasipi", "suokukko", "valkoviklo", "taivaanvuohi", "töyhtöhyyppä", "kurki"],
-            "Päivänpetolinnut": ["kalasääski", "kanahaukka", "maakotka", "merikotka", "muuttohaukka"],
-            "Kanalinnut": ["pyy", "metso", "teeri", "riekko", "fasaani"],
-            "Pöllöt": ["helmipöllö", "lapinpöllö", "suopöllö", "hiiripöllö", "varpuspöllö", "huuhkaja"],
-            "Tikat/käki/sepelkyyhky": ["palokärki", "pohjantikka", "käpytikka", "käki", "sepelkyyhky"],
-            "Lokit/Tiirat": ["kalalokki", "harmaalokki", "naurulokki", "pikkulokki", "selkälokki", "kalatiira"],
-            "Varislinnut": ["varis", "korppi", "harakka", "närhi", "kuukkeli"],
-            "Rastaat": ["mustarastas", "räkättirastas", "laulurastas", "punakylkirastas"],
-            "Tiaiset": ["sinitiainen", "hömötiainen", "talitiainen", "töyhtötiainen"],
-            "Pääskyt/kirskulinnut": ["haarapääsky", "törmäpääsky", "räystäspääsky", "tervapääsky"],
-            "Muut pikkulinnut": ["järripeippo", "peippo", "viherpeippo", "keltasirkku", "kirjosieppo", "koskikara", "leppälintu", "pajulintu", "pulmunen", "punatulkku", "urpiainen", "tilhi", "varpunen", "västäräkki"],
-            "Käpylinnut": ["isokäpylintu"]
-        };
+        // ... bird data and mapping stays the same
 
-        const birdNameMappings = {
-            "pilkkasiipi": "Mergus serrator",
-            "metso": "Tetrao urogallus",
-            "isokuovi": "Numenius arquata",
-            "harakka": "Pica pica"
-        };
+        // existing birdsByCategory, birdNameMappings, allBirds
 
         const allBirds = Object.values(birdsByCategory).flat();
         let shuffledBirds = [];
@@ -88,101 +78,13 @@
         let questionIndex = 0;
         let correctCount = 0;
 
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-
-        function getCategory(birdName) {
-            for (const [category, birds] of Object.entries(birdsByCategory)) {
-                if (birds.includes(birdName)) return { category, birds };
-            }
-            return null;
-        }
-
-        function getRandomOptionsFromSameCategory(correctBird, categoryBirds) {
-            const options = [correctBird];
-            while (options.length < 3) {
-                const randomBird = categoryBirds[Math.floor(Math.random() * categoryBirds.length)];
-                if (!options.includes(randomBird)) {
-                    options.push(randomBird);
-                }
-            }
-            return shuffle(options);
-        }
-
-        async function fetchWikimediaImage(birdName) {
-            const searchTerm = birdNameMappings[birdName] || birdName;
-            const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&pithumbsize=500&titles=${encodeURIComponent(searchTerm)}`;
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                const pages = data.query.pages;
-                const firstPage = Object.values(pages)[0];
-                return firstPage?.thumbnail?.source || null;
-            } catch {
-                return null;
-            }
-        }
-
-        async function fetchiNaturalistImage(birdName) {
-            const searchTerm = birdNameMappings[birdName] || birdName;
-            const url = `https://api.inaturalist.org/v1/taxa?q=${encodeURIComponent(searchTerm)}&rank=species`;
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                return data.results[0]?.default_photo?.medium_url || null;
-            } catch {
-                return null;
-            }
-        }
-
-        async function fetchGBIFImage(birdName) {
-            const searchTerm = birdNameMappings[birdName] || birdName;
-            const url = `https://api.gbif.org/v1/species/match?name=${encodeURIComponent(searchTerm)}`;
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                if (data.usageKey) {
-                    const mediaUrl = `https://api.gbif.org/v1/species/${data.usageKey}/media`;
-                    const mediaResponse = await fetch(mediaUrl);
-                    const mediaData = await mediaResponse.json();
-                    return mediaData.results[0]?.identifier || null;
-                }
-            } catch {
-                return null;
-            }
-            return null;
-        }
-
-        async function findBirdImage(birdName) {
-            if (birdName === "harakka") return "https://upload.wikimedia.org/wikipedia/commons/4/42/Sroka_Pica_Pica_II.jpg";
-            if (birdName === "pilkkasiipi") return "https://suomenluonto.fi/wp-content/uploads/2022/06/pilkkasiipi_anne_keskiviikka-1600x991.jpeg";
-            if (birdName === "käki") return "https://www.vaasa.fi/app/uploads/2019/09/458dead9-luontosivut.jpg";
-            if (birdName === "merikotka") return "https://suomenluonto.fi/wp-content/uploads/2022/01/merikotka.jpg";
-            if (birdName === "tukkakoskelo") return "https://kalassa.net/kalapedia/images/1/1a/Tukkakoskelo1.jpg";
-            if (birdName === "isokäpylintu") return "https://www.birdphoto.fi/arto/wk14-2013/1314.jpg";
-
-            let imageUrl = await fetchWikimediaImage(birdName);
-            if (imageUrl) return imageUrl;
-
-            imageUrl = await fetchiNaturalistImage(birdName);
-            if (imageUrl) return imageUrl;
-
-            imageUrl = await fetchGBIFImage(birdName);
-            if (imageUrl) return imageUrl;
-
-            return "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg";
-        }
+        // ... all functions stay the same
 
         async function loadQuiz() {
-            if (questionIndex >= 40) {
-                const message = correctCount >= 30
-                    ? `Onnea! Sait ${correctCount}/40 oikein!`
-                    : `Yritä uudelleen, sä pystyt siihen! (${correctCount}/40 oikein)`;
+            if (questionIndex >= shuffledBirds.length) {
+                const message = correctCount >= shuffledBirds.length * 0.75
+                    ? `Onnea! Sait ${correctCount}/${shuffledBirds.length} oikein!`
+                    : `Yritä uudelleen, sä pystyt siihen! (${correctCount}/${shuffledBirds.length} oikein)`;
                 document.getElementById('quiz').innerHTML = `<h2>${message}</h2>`;
                 return;
             }
@@ -193,49 +95,13 @@
             const imageUrl = await findBirdImage(currentBird);
             document.getElementById('birdImage').src = imageUrl;
             document.getElementById('result').textContent = '';
-            document.getElementById('score').textContent = `Kysymys ${questionIndex + 1}/40 — Oikeita: ${correctCount}`;
+            document.getElementById('score').textContent = `Kysymys ${questionIndex + 1}/${shuffledBirds.length} — Oikeita: ${correctCount}`;
             document.getElementById('options').style.display = 'none';
             document.getElementById('answerInput').value = '';
         }
 
-        function showOptions() {
-            const options = getRandomOptionsFromSameCategory(currentBird, currentCategoryBirds);
-            correctAnswerIndex = options.indexOf(currentBird);
-            const optionButtons = document.getElementById('options').children;
-            optionButtons[0].textContent = options[0];
-            optionButtons[1].textContent = options[1];
-            optionButtons[2].textContent = options[2];
-            document.getElementById('options').style.display = 'block';
-        }
-
-        function checkAnswer(selectedIndex) {
-            const buttons = document.getElementById('options').children;
-            if (buttons[selectedIndex].textContent === currentBird) {
-                document.getElementById('result').textContent = 'Oikein!';
-                correctCount++;
-            } else {
-                document.getElementById('result').textContent = `Väärin! Oikea vastaus oli: ${currentBird}`;
-            }
-            questionIndex++;
-            setTimeout(loadQuiz, 1500);
-        }
-
-        document.getElementById('answerInput').addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') {
-                const userInput = this.value.trim().toLowerCase();
-                if (userInput === currentBird.toLowerCase()) {
-                    document.getElementById('result').textContent = 'WAUTSI HYVÄ!';
-                    correctCount++;
-                } else {
-                    document.getElementById('result').textContent = `Väärin! Oikea vastaus oli: ${currentBird}`;
-                }
-                questionIndex++;
-                setTimeout(loadQuiz, 1500);
-            }
-        });
-
         window.onload = () => {
-            shuffledBirds = shuffle([...allBirds]).slice(0, 40);
+            shuffledBirds = shuffle([...allBirds]); // Removed .slice(0, 40)
             loadQuiz();
         };
     </script>
