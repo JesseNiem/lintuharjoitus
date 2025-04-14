@@ -137,6 +137,7 @@
         async function findBirdImage(birdName) {
             if (birdName === "harakka") return "https://upload.wikimedia.org/wikipedia/commons/4/42/Sroka_Pica_Pica_II.jpg";
             if (birdName === "pilkkasiipi") return "https://suomenluonto.fi/wp-content/uploads/2022/06/pilkkasiipi_anne_keskiviikka-1600x991.jpeg";
+ if (birdName === "käki") return "https://www.vaasa.fi/app/uploads/2019/09/458dead9-luontosivut.jpg";
 
             let imageUrl = await fetchWikimediaImage(birdName);
             if (imageUrl) return imageUrl;
