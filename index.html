@@ -29,6 +29,16 @@
         #options {
             display: none;
         }
+        #answerInput {
+            margin-top: 20px;
+            font-size: 20px;
+            padding: 8px;
+            width: 60%;
+        }
+        #answerInstruction {
+            font-size: 18px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -42,6 +52,8 @@
         </div>
         <p id="result"></p>
         <p id="score"></p>
+        <p id="answerInstruction">Klikkaamalla kuvaa saat vaihtoehdot, tai voit kirjoittaa linnun nimen suoraan tähän:</p>
+        <input type="text" id="answerInput" placeholder="Kirjoita linnun nimi ja paina Enter">
     </div>
 
     <script>
@@ -69,13 +81,9 @@
         };
 
         const allBirds = Object.values(birdsByCategory).flat();
-        const birdCategoryMap = {};
-        for (const [category, birds] of Object.entries(birdsByCategory)) {
-            birds.forEach(bird => birdCategoryMap[bird] = category);
-        }
-
         let shuffledBirds = [];
         let currentBird;
+        let currentCategoryBirds = [];
         let correctAnswerIndex;
         let questionIndex = 0;
         let correctCount = 0;
@@ -88,9 +96,14 @@
             return array;
         }
 
-        function getRandomOptions(correctBird) {
-            const category = birdCategoryMap[correctBird];
-            const categoryBirds = birdsByCategory[category];
+        function getCategory(birdName) {
+            for (const [category, birds] of Object.entries(birdsByCategory)) {
+                if (birds.includes(birdName)) return { category, birds };
+            }
+            return null;
+        }
+
+        function getRandomOptionsFromSameCategory(correctBird, categoryBirds) {
             const options = [correctBird];
             while (options.length < 3) {
                 const randomBird = categoryBirds[Math.floor(Math.random() * categoryBirds.length)];
@@ -149,7 +162,6 @@
             if (birdName === "harakka") return "https://upload.wikimedia.org/wikipedia/commons/4/42/Sroka_Pica_Pica_II.jpg";
             if (birdName === "pilkkasiipi") return "https://suomenluonto.fi/wp-content/uploads/2022/06/pilkkasiipi_anne_keskiviikka-1600x991.jpeg";
             if (birdName === "käki") return "https://www.vaasa.fi/app/uploads/2019/09/458dead9-luontosivut.jpg";
-            if (birdName === "merikotka") return "https://suomenluonto.fi/wp-content/uploads/2022/01/merikotka.jpg";
 
             let imageUrl = await fetchWikimediaImage(birdName);
             if (imageUrl) return imageUrl;
@@ -164,8 +176,6 @@
         }
 
         async function loadQuiz() {
-            document.getElementById('options').style.display = "none";
-
             if (questionIndex >= 40) {
                 const message = correctCount >= 30
                     ? `Onnea! Sait ${correctCount}/40 oikein!`
@@ -175,24 +185,29 @@
             }
 
             currentBird = shuffledBirds[questionIndex];
+            const { category, birds } = getCategory(currentBird);
+            currentCategoryBirds = birds;
             const imageUrl = await findBirdImage(currentBird);
             document.getElementById('birdImage').src = imageUrl;
             document.getElementById('result').textContent = '';
             document.getElementById('score').textContent = `Kysymys ${questionIndex + 1}/40 — Oikeita: ${correctCount}`;
+            document.getElementById('options').style.display = 'none';
+            document.getElementById('answerInput').value = '';
         }
 
         function showOptions() {
-            const options = getRandomOptions(currentBird);
+            const options = getRandomOptionsFromSameCategory(currentBird, currentCategoryBirds);
             correctAnswerIndex = options.indexOf(currentBird);
             const optionButtons = document.getElementById('options').children;
-            for (let i = 0; i < 3; i++) {
-                optionButtons[i].textContent = options[i];
-            }
-            document.getElementById('options').style.display = "block";
+            optionButtons[0].textContent = options[0];
+            optionButtons[1].textContent = options[1];
+            optionButtons[2].textContent = options[2];
+            document.getElementById('options').style.display = 'block';
         }
 
         function checkAnswer(selectedIndex) {
-            if (selectedIndex === correctAnswerIndex) {
+            const buttons = document.getElementById('options').children;
+            if (buttons[selectedIndex].textContent === currentBird) {
                 document.getElementById('result').textContent = 'Oikein!';
                 correctCount++;
             } else {
@@ -201,6 +216,20 @@
             questionIndex++;
             setTimeout(loadQuiz, 1500);
         }
+
+        document.getElementById('answerInput').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                const userInput = this.value.trim().toLowerCase();
+                if (userInput === currentBird.toLowerCase()) {
+                    document.getElementById('result').textContent = 'WAUTSI HYVÄ!';
+                    correctCount++;
+                } else {
+                    document.getElementById('result').textContent = `Väärin! Oikea vastaus oli: ${currentBird}`;
+                }
+                questionIndex++;
+                setTimeout(loadQuiz, 1500);
+            }
+        });
 
         window.onload = () => {
             shuffledBirds = shuffle([...allBirds]).slice(0, 40);
