@@ -57,7 +57,7 @@
 <body>
     <h1>LAAT25 Lintuharjoitus</h1>
     <div id="quiz">
-        <img id="birdImage" src="" alt="Linnun kuva" onclick="showOptions()">
+        <img id="birdImage" src="" alt="Linnun kuva" onclick="showOptions()" onerror="handleImageError()">
         <div id="options">
             <button onclick="checkAnswer(0)"></button>
             <button onclick="checkAnswer(1)"></button>
@@ -137,7 +137,8 @@
                 const pages = data.query.pages;
                 const firstPage = Object.values(pages)[0];
                 return firstPage?.thumbnail?.source || null;
-            } catch {
+            } catch (error) {
+                console.error(`Wikimedia fetch error for ${birdName}:`, error);
                 return null;
             }
         }
@@ -149,7 +150,8 @@
                 const response = await fetch(url);
                 const data = await response.json();
                 return data.results[0]?.default_photo?.medium_url || null;
-            } catch {
+            } catch (error) {
+                console.error(`iNaturalist fetch error for ${birdName}:`, error);
                 return null;
             }
         }
@@ -166,13 +168,15 @@
                     const mediaData = await mediaResponse.json();
                     return mediaData.results[0]?.identifier || null;
                 }
-            } catch {
+            } catch (error) {
+                console.error(`GBIF fetch error for ${birdName}:`, error);
                 return null;
             }
             return null;
         }
 
         async function findBirdImage(birdName) {
+            if (birdName === "koskikara") return "https://upload.wikimedia.org/wikipedia/commons/4/41/White-throated_dipper.jpg";
             if (birdName === "harakka") return "https://upload.wikimedia.org/wikipedia/commons/4/42/Sroka_Pica_Pica_II.jpg";
             if (birdName === "pilkkasiipi") return "https://suomenluonto.fi/wp-content/uploads/2022/06/pilkkasiipi_anne_keskiviikka-1600x991.jpeg";
             if (birdName === "käki") return "https://www.vaasa.fi/app/uploads/2019/09/458dead9-luontosivut.jpg";
@@ -190,6 +194,10 @@
             if (imageUrl) return imageUrl;
 
             return "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg";
+        }
+
+        function handleImageError() {
+            document.getElementById('birdImage').src = "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg";
         }
 
         async function loadQuiz() {
